@@ -77,22 +77,21 @@ void Usuario::setMonto(int monto)
 	this->monto = monto;
 }
 
-// Funci髇 para obtener la altura de un nodo
-int obtenerAltura(Transferencia* nodo) {
+int Usuario::obtenerAltura(Transferencia* nodo) {
 	return nodo ? nodo->getAltura() : 0;
 }
 
-// Funci髇 para obtener el factor de balanceo de un nodo
-int obtenerFactorBalanceo(Transferencia* nodo) {
+// Funci贸n para obtener el factor de balanceo de un nodo
+int Usuario::obtenerFactorBalanceo(Transferencia* nodo) {
 	return nodo ? obtenerAltura(nodo->getIzquierda()) - obtenerAltura(nodo->getDerecha()) : 0;
 }
 
-// Rotaci髇 a la derecha
-Transferencia* rotarDerecha(Transferencia* y) {
+// Rotaci贸n a la derecha
+Transferencia* Usuario::rotarDerecha(Transferencia* y) {
 	Transferencia* x = y->getIzquierda();
 	Transferencia* T2 = x->getDerecha();
 
-	// Realizar rotaci髇
+	// Realizar rotaci贸n
 	x->setDerecha(y);
 	y->setIzquierda(T2);
 
@@ -100,16 +99,16 @@ Transferencia* rotarDerecha(Transferencia* y) {
 	y->setAltura(std::max(obtenerAltura(y->getIzquierda()), obtenerAltura(y->getDerecha())) + 1);
 	x->setAltura(std::max(obtenerAltura(x->getIzquierda()), obtenerAltura(x->getDerecha())) + 1);
 
-	// Retornar nueva ra韟
+	// Retornar nueva ra铆z
 	return x;
 }
 
-// Rotaci髇 a la izquierda
-Transferencia* rotarIzquierda(Transferencia* x) {
+// Rotaci贸n a la izquierda
+Transferencia* Usuario::rotarIzquierda(Transferencia* x) {
 	Transferencia* y = x->getDerecha();
 	Transferencia* T2 = y->getIzquierda();
 
-	// Realizar rotaci髇
+	// Realizar rotaci贸n
 	y->setIzquierda(x);
 	x->setDerecha(T2);
 
@@ -117,11 +116,12 @@ Transferencia* rotarIzquierda(Transferencia* x) {
 	x->setAltura(std::max(obtenerAltura(x->getIzquierda()), obtenerAltura(x->getDerecha())) + 1);
 	y->setAltura(std::max(obtenerAltura(y->getIzquierda()), obtenerAltura(y->getDerecha())) + 1);
 
-	// Retornar nueva ra韟
+	// Retornar nueva ra铆z
 	return y;
 }
 
-Transferencia* balancearNodo(Transferencia* nodo) {
+// Funci贸n para balancear el nodo
+Transferencia* Usuario::balancearNodo(Transferencia* nodo) {
 	nodo->setAltura(std::max(obtenerAltura(nodo->getIzquierda()), obtenerAltura(nodo->getDerecha())) + 1);
 
 	int balance = obtenerFactorBalanceo(nodo);
@@ -149,31 +149,50 @@ Transferencia* balancearNodo(Transferencia* nodo) {
 	return nodo;
 }
 
-// Funci髇 para insertar un nodo en el 醨bol AVL
-Transferencia* insertarAVL(Transferencia* nodo, Transferencia* nuevaTrans) {
-	if (!nodo)
-		return nuevaTrans;
-
-	if (nuevaTrans->getMonto() < nodo->getMonto())
-		nodo->setIzquierda(insertarAVL(nodo->getIzquierda(), nuevaTrans));
-	else if (nuevaTrans->getMonto() > nodo->getMonto())
-		nodo->setDerecha(insertarAVL(nodo->getDerecha(), nuevaTrans));
-	else
-		return nodo;
-
-	return balancearNodo(nodo);
-}
-
 void Usuario::ingresarTransferencia(Transferencia* nuevaTrans)
 {
-	transfe = insertarAVL(transfe, nuevaTrans);
+	if (!transfe) {
+		transfe = nuevaTrans;
+	}
+	else {
+		// Pila para realizar la inserci贸n y balanceo sin recursi贸n
+		std::vector<Transferencia*> path;
+		Transferencia* current = transfe;
+
+		// Encuentra la posici贸n correcta para la nueva transferencia
+		while (current) {
+			path.push_back(current);
+			if (nuevaTrans->getMonto() < current->getMonto()) {
+				if (!current->getIzquierda()) {
+					current->setIzquierda(nuevaTrans);
+					break;
+				}
+				current = current->getIzquierda();
+			}
+			else {
+				if (!current->getDerecha()) {
+					current->setDerecha(nuevaTrans);
+					break;
+				}
+				current = current->getDerecha();
+			}
+		}
+
+		// Balancea el 谩rbol AVL
+		for (auto it = path.rbegin(); it != path.rend(); ++it) {
+			*it = balancearNodo(*it);
+		}
+
+		// Actualiza la ra铆z en caso de que haya cambiado
+		transfe = path.front();
+	}
+
 	ingresarfechas(nuevaTrans->getFecha());
 	if (nombre == nuevaTrans->getCuentaD()) {
 		ingresarRuts(nuevaTrans->getCuentaO());
 	}
 	else {
 		ingresarRuts(nuevaTrans->getCuentaD());
-
 	}
 }
 
